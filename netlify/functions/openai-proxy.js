@@ -1,51 +1,38 @@
 exports.handler = async (event, context) => {
-  console.log("Function invoked!"); // Clue #1: Check if the function starts
+  const { name, scenario, tarot } = JSON.parse(event.body);
+  
+  // This will read your new Google key from Netlify's secure settings.
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  let prompt = `You are "Loyalty Test AI," a sassy, slightly dramatic, and fun AI that simulates relationship loyalty tests. A user wants to test their partner named "${name}". The scenario is: "${scenario}". Generate a short, spicy, and plausible "fake DM" chat script... Verdict: [Your sassy conclusion]`;
+
+  if (tarot) {
+    prompt += `\n\n🔮 Tarot Twist: Pull one symbolic tarot card and give a one-sentence interpretation.`;
+  }
+  
+  // This is the new URL for Google AI
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
   try {
-    const body = JSON.parse(event.body);
-    const { name, scenario, tarot } = body;
-    console.log("Received data:", { name, scenario, tarot }); // Clue #2: Check the data received
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      console.error("OpenAI API Key is not set!");
-      throw new Error("API Key is missing.");
-    }
-
-    let prompt = `You are "Loyalty Test AI," a sassy, slightly dramatic, and fun AI that simulates relationship loyalty tests...`; // Shortened for clarity
-    
-    if (tarot) {
-      prompt += `\n\n🔮 Tarot Twist: Pull one symbolic tarot card and give a one-sentence interpretation.`;
-    }
-
-    console.log("Sending prompt to OpenAI..."); // Clue #3: Check before sending
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
       },
+      // This is the new request format for Google AI
       body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt.replace('{name}', name).replace('{scenario}', scenario) }], // Simplified prompt building
-        temperature: 0.8,
-        max_tokens: 250,
+        contents: [{ parts: [{ text: prompt }] }],
       }),
     });
-    
-    console.log("Received response from OpenAI with status:", response.status); // Clue #4: Check OpenAI's response
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI API Error:", errorText);
-      throw new Error(`OpenAI error: ${errorText}`);
+      const errorData = await response.json();
+      throw new Error(JSON.stringify(errorData));
     }
 
     const data = await response.json();
-    console.log("OpenAI data received:", data); // Clue #5: See the full data from OpenAI
-    
-    const reply = data.choices[0].message.content;
+    // This is the new way to get the reply from Google AI
+    const reply = data.candidates[0].content.parts[0].text;
 
     return {
       statusCode: 200,
@@ -53,7 +40,6 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error("Caught an error in the function:", error.message); // Clue #6: Catch any other errors
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
