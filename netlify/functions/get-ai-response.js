@@ -1,4 +1,3 @@
-const fetch = require('node-fetch');
 exports.handler = async function (event, context) {
     // Get the data the user sent from the browser
     const { name, scenario } = JSON.parse(event.body);
@@ -37,4 +36,4 @@ exports.handler = async function (event, context) {
         statusCode: 200,
         body: JSON.stringify({ result: chatResult })
     };
-}
+};
