@@ -37,8 +37,9 @@
     </div>
 
     <script>
-        // --- STEP 1: PASTE YOUR API KEY HERE ---
-        const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"; 
+        // --- PASTE YOUR API KEY HERE ---
+        const OPENAI_API_KEY = "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
+"; 
         
         const loyaltyForm = document.getElementById('loyaltyForm');
         const submitButton = document.getElementById('submit-button');
@@ -79,7 +80,7 @@
                                 content: scenario
                             }
                         ],
-                        temperature: 0.8 // A little creative
+                        temperature: 0.8
                     })
                 });
 
@@ -100,6 +101,5 @@
                 submitButton.textContent = 'Run Simulation';
             }
         });
-    </script>
-</body>
+    </script></body>
 </html>
