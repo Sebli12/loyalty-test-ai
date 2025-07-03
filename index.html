@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loyalty Test AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-image: linear-gradient(to bottom right, #1a0b2e, #1e1b4b, #3c096c); }
+        #result-text { font-family: 'Courier New', Courier, monospace; line-height: 1.6; white-space: pre-wrap; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center font-sans p-4">
+    <div class="w-full max-w-lg p-8 space-y-6 bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl shadow-2xl text-center border border-purple-500/20">
+        <h1 class="text-3xl md:text-4xl font-bold text-white">💔 Loyalty Test AI</h1>
+        <p class="text-sm md:text-base text-gray-300 -mt-4 mb-6">Catch a Cheater? Or Just Curious?</p>
+        <form id="loyaltyForm" class="space-y-5 text-left">
+            <div>
+                <label for="name" class="block text-sm font-medium mb-1 text-gray-200">Their First Name</label>
+                <input type="text" id="name" name="name" class="w-full px-4 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-pink-500 focus:outline-none transition" placeholder="e.g., Alex" required />
+            </div>
+            <div>
+                <label for="scenario" class="block text-sm font-medium mb-1 text-gray-200">What's the test?</label>
+                <select id="scenario" name="scenario" class="w-full px-4 py-2 rounded-lg bg-white/10 text-white focus:ring-2 focus:ring-pink-500 focus:outline-none transition">
+                    <option value="flirty_dm">A flirty stranger slides into their DMs</option>
+                    <option value="ex_test">An 'ex' randomly texts them 'I miss you'</option>
+                    <option value="new_person">Someone they just met asks for their number</option>
+                    <option value="late_night">A 'friend' texts them 'U up?' at 2 AM</option>
+                </select>
+            </div>
+            <div>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="tarot" name="tarot" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-pink-800 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-200">Add a Tarot Twist? 🔮</span>
+                </label>
+            </div>
+            <button type="submit" id="submitBtn" class="w-full py-3 bg-pink-600 hover:bg-pink-700 rounded-lg text-lg font-semibold transition-transform transform hover:scale-105">
+                Get The Tea 🫖
+            </button>
+        </form>
+        <div id="results" class="hidden mt-6 p-4 bg-black/20 rounded-lg text-left animate-fade-in">
+            <h3 class="text-xl font-bold mb-2">The Results Are In...</h3>
+            <div id="result-text"></div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loyaltyForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const scenario = document.getElementById('scenario').value;
+            const tarot = document.getElementById('tarot').checked;
+            
+            // --- IMPORTANT: PASTE YOUR API KEY HERE LATER ---
+            const apiKey = "YOUR_SECRET_OPENAI_API_KEY"; 
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultsDiv = document.getElementById('results');
+            const resultText = document.getElementById('result-text');
+            if (apiKey === "YOUR_SECRET_OPENAI_API_KEY") {
+                alert("Error: You need to add your OpenAI API Key to the code first!");
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Spilling the tea... ⏳';
+            resultsDiv.classList.add('hidden');
+            let prompt = `You are "Loyalty Test AI," a sassy, slightly dramatic, and fun AI that simulates relationship loyalty tests in the style of a TikTok or YouTube skit. A user wants to test their partner named "${name}". The scenario is: "${scenario}". Generate a short, spicy, and plausible "fake DM" chat script based on this scenario. Make it look like a real DM exchange. The first message should be from the "tempter." The second message should be "${name}'s" potential reply. Keep it ambiguous but leaning towards disloyal for maximum drama. The third message is the tempter's follow-up. End with a one-sentence, sassy "Verdict" on whether they passed or failed the vibe check. Example Format: Her: [First message]\n${name}: [Their potential reply]\nHer: [Follow-up]\n\nVerdict: [Your sassy conclusion]`;
+            if (tarot) {
+                prompt += `\n\nFinally, add a "🔮 Tarot Twist:" section. Pull one symbolic tarot card (e.g., The Tower, Two of Cups, Three of Swords) that captures the energy of this situation and give a one-sentence interpretation.`;
+            }
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 250 })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message);
+                }
+                const data = await response.json();
+                resultText.textContent = data.choices[0].message.content;
+                resultsDiv.classList.remove('hidden');
+            } catch (error) {
+                resultText.textContent = `Oops! The AI is sleeping. This usually means the API key is invalid or has a billing issue. (Error: ${error.message})`;
+                resultsDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Get The Tea 🫖';
+            }
+        });
+    </script>
+</body>
+</html>
